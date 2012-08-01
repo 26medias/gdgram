@@ -27,7 +27,19 @@
 				"width"		=> $width,
 				"height"	=> $height
 			));
-			return count($this->layers)-1;
+			//return count($this->layers)-1;
+			return array(
+				"name"		=> $name,
+				"ress"		=> $ress,
+				"width"		=> $width,
+				"height"	=> $height
+			);
+		}
+		
+		
+		public function fill($ress, $rgba) {
+			$color = imagecolorallocatealpha($ress["ress"], $rgba["r"], $rgba["g"], $rgba["b"], $rgba["a"]);
+			imagefill($ress["ress"], 0, 0, $color);
 		}
 		
 		public function loadImage($filename) {
@@ -55,7 +67,7 @@
 			);
 		}
 		
-		public function fit($ress, $mw, $mh, $scale=true) {
+		public function fit($ress, $mw, $mh, $scale=true, $resize=false) {
 			$ress_ratio 	= $ress["width"] / $ress["height"];
 			$box_ratio		= $mw / $mh;
 			$diff = array(
@@ -86,15 +98,27 @@
 				$ny				= 0;
 			}
 			// create the box
-			$buffer 		= $this->createTransparentRessource($mw, $mh);
-			imagealphablending($buffer, true);
-			imagecopyresampled($buffer, $ress["ress"], $nx, $ny, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
-			imagesavealpha($buffer,true);
-			return array(
-				"ress"		=> $buffer,
-				"width"		=> $mw,
-				"height"	=> $mh
-			);
+			if (!$resize) {
+				$buffer 		= $this->createTransparentRessource($mw, $mh);
+				imagealphablending($buffer, true);
+				imagecopyresampled($buffer, $ress["ress"], $nx, $ny, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
+				imagesavealpha($buffer,true);
+				return array(
+					"ress"		=> $buffer,
+					"width"		=> $mw,
+					"height"	=> $mh
+				);
+			} else {
+				$buffer 		= $this->createTransparentRessource($nw, $nh);
+				imagealphablending($buffer, true);
+				imagecopyresampled($buffer, $ress["ress"], 0, 0, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
+				imagesavealpha($buffer,true);
+				return array(
+					"ress"		=> $buffer,
+					"width"		=> $nw,
+					"height"	=> $nh
+				);
+			}
 		}
 		
 		public function duplicate($ress) {
@@ -150,10 +174,10 @@
 			return $buffer;
 		}
 		
-		public function copy($ress, $layerID, $x=0, $y=0) {
-			imagealphablending($this->layers[$layerID]["ress"], true);
-			imagecopy($this->layers[$layerID]["ress"], $ress["ress"], $x,$y,0,0,$ress["width"],$ress["height"]);
-			imagesavealpha($this->layers[$layerID]["ress"],true);
+		public function copy($ress, $layer, $x=0, $y=0) {
+			imagealphablending($layer["ress"], true);
+			imagecopy($layer["ress"], $ress["ress"], $x,$y,0,0,$ress["width"],$ress["height"]);
+			imagesavealpha($layer["ress"],true);
 		}
 		
 		private function createTransparentRessource($width=false, $height=false) {
@@ -165,7 +189,7 @@
 			return $ress;
 		}
 		
-		public function raster($filename) {
+		public function raster($filename=false) {
 			$raster = $this->createTransparentRessource($this->canvas["width"], $this->canvas["height"]);
 			foreach ($this->layers as $layer) {
 				$coord = array();
@@ -175,7 +199,18 @@
 				imagecopy($raster, $layer["ress"], $coord["x"],$coord["y"],0,0,$layer["width"],$layer["height"]);
 				imagesavealpha($raster,true);
 			}
-			return imagepng($raster, $filename, 9, PNG_ALL_FILTERS);
+			if ($filename) {
+				imagepng($raster, $filename, 9, PNG_ALL_FILTERS);
+			}
+			return array(
+				"ress"		=> $raster,
+				"width"		=> $this->canvas["width"],
+				"height"	=> $this->canvas["height"]
+			);
+		}
+		
+		public function export($ress, $filename) {
+			imagepng($ress["ress"], $filename, 9, PNG_ALL_FILTERS);
 		}
 	}
 ?>

@@ -7,8 +7,16 @@
 	
 	// create layers
 	$layer_bg 		= $doc->newLayer("background");
-	$layer_imgs 		= $doc->newLayer("thumbs");
+	$layer_imgs 	= $doc->newLayer("thumbs");
+	$layer_filters 	= $doc->newLayer("filters");
 	
+	
+	$doc->fill($layer_imgs, array(
+		"r"	=> 160,
+		"g"	=> 210,
+		"b"	=> 9,
+		"a"	=> 50
+	));
 	
 	$jellyfish 	= $doc->loadImage("images/Jellyfish.jpg");
 	$logo 		= $doc->loadImage("images/logo26.png");
@@ -43,12 +51,16 @@
 	$logothumb2 = $doc->fit($logo, 500, 200, false);
 	$doc->copy($logothumb2, $layer_imgs, 0, 200);
 	
-	$logothumb2	= $doc->fit($logo, 20, 500);
-	$doc->copy($logothumb2, $layer_imgs, 0, 0);
+	$logothumb3	= $doc->fit($logo, 50, 500);
+	$doc->copy($logothumb3, $layer_imgs, 0, 0);
 	
 	$qrcode 	= $doc->fit($qrcode, 100, 100);
 	$doc->copy($qrcode, $layer_imgs, 500-$qrcode["width"], 500-$qrcode["height"]);
 	
+	$small01	= $doc->fit($logo, 50,50, false, false);
+	$doc->export($small01, "small01.png");
+	$small02	= $doc->fit($logo, 50,50, false, true);
+	$doc->export($small02, "small02.png");
 	
 	$doc->raster("test.png");
 ?>
@@ -61,5 +73,7 @@
 </head>
 <body style="background-color:	#5c6e7f">
 	<img src="test.png" style="border: 1px solid #000; padding: 5px;" />
+	<img src="small01.png" style="border: 1px solid #000; padding: 5px;" />
+	<img src="small02.png" style="border: 1px solid #000; padding: 5px;" />
 </body>
 </html>
