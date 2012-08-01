@@ -55,7 +55,7 @@
 			);
 		}
 		
-		public function fit($ress, $mw, $mh) {
+		public function fit($ress, $mw, $mh, $scale=true) {
 			$ress_ratio 	= $ress["width"] / $ress["height"];
 			$box_ratio		= $mw / $mh;
 			$diff = array(
@@ -74,6 +74,14 @@
 				$scale_ratio	= $ress["height"] / $mh;
 				$nw				= $ress["width"] / $scale_ratio;
 				$nh				= $mh;
+				if (!$scale) {
+					if ($nw > $ress["width"]) {
+						$nw = $ress["width"];
+					}
+					if ($nh > $ress["height"]) {
+						$nh = $ress["height"];
+					}
+				}
 				$nx				= ($mw-$nw)/2;
 				$ny				= 0;
 			}
@@ -87,6 +95,59 @@
 				"width"		=> $mw,
 				"height"	=> $mh
 			);
+		}
+		
+		public function duplicate($ress) {
+			$buffer 	= $this->createTransparentRessource($ress["width"], $ress["height"]);
+			imagealphablending($buffer, true);
+			imagecopy($buffer, $ress["ress"], 0, 0, 0, 0, $ress["width"], $ress["height"]);
+			imagesavealpha($buffer,true);
+			return array(
+				"ress"		=> $buffer,
+				"width"		=> $ress["width"],
+				"height"	=> $ress["height"]
+			);
+		}
+		
+		public function applyFilter($ress, $filterName, $options=array()) {
+			// create a copy
+			$buffer		= $this->duplicate($ress);
+			switch ($filterName) {
+				case "grayscale":
+				imagefilter($buffer["ress"], IMG_FILTER_GRAYSCALE);
+				break;
+				case "brightness":
+				imagefilter($buffer["ress"], IMG_FILTER_BRIGHTNESS, $options["level"]);
+				break;
+				case "contrast":
+				imagefilter($buffer["ress"], IMG_FILTER_CONTRAST, $options["level"]);
+				break;
+				case "smooth":
+				imagefilter($buffer["ress"], IMG_FILTER_SMOOTH, $options["level"]);
+				break;
+				case "colorize":
+				imagefilter($buffer["ress"], IMG_FILTER_COLORIZE, $options["r"], $options["g"], $options["b"], $options["a"]);
+				break;
+				case "negative":
+				imagefilter($buffer["ress"], IMG_FILTER_NEGATE);
+				break;
+				case "edge":
+				imagefilter($buffer["ress"], IMG_FILTER_EDGEDETECT);
+				break;
+				case "emboss":
+				imagefilter($buffer["ress"], IMG_FILTER_EMBOSS);
+				break;
+				case "blur":
+				imagefilter($buffer["ress"], IMG_FILTER_GAUSSIAN_BLUR);
+				break;
+				case "sketch":
+				imagefilter($buffer["ress"], IMG_FILTER_MEAN_REMOVAL);
+				break;
+				case "pixelate":
+				imagefilter($buffer["ress"], IMG_FILTER_PIXELATE, $options["size"], $options["advanced"]);
+				break;
+			}
+			return $buffer;
 		}
 		
 		public function copy($ress, $layerID, $x=0, $y=0) {

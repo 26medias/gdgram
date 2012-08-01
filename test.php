@@ -2,30 +2,52 @@
 
 	require_once("gdgram.php");
 	
-	$doc 	= new gdgram();
+	$doc 		= new gdgram();
 	$doc->canvasSize(500,500);
-	$bg 	= $doc->newLayer("background");
 	
-	$imgs 	= $doc->newLayer("thumbs");
+	// create layers
+	$layer_bg 		= $doc->newLayer("background");
+	$layer_imgs 		= $doc->newLayer("thumbs");
 	
-	$bgimg 	= $doc->loadImage("images/Jellyfish.jpg");
-	$bgthumb= $doc->fit($bgimg, 500, 500);
-	$doc->copy($bgthumb, $bg);
 	
-	$logo 	= $doc->loadImage("images/logo26.png");
-	$doc->copy($logo, $bg, 100, 100);
-	$doc->copy($logo, $bg, 200, 200);
-	$doc->copy($logo, $bg, 220, 220);
+	$jellyfish 	= $doc->loadImage("images/Jellyfish.jpg");
+	$logo 		= $doc->loadImage("images/logo26.png");
+	$qrcode 	= $doc->loadImage("images/qr.png");
 	
-	$thumb 	= $doc->fit($logo, 500, 20);
-	$doc->copy($thumb, $imgs, 0, 0);
+	$jellythumb	= $doc->fit($jellyfish, 100, 100);
+	$doc->copy($jellythumb, $layer_bg);
+	$doc->copy($doc->applyFilter($jellythumb, "brightness", array("level"=>20)), $layer_bg,100,0);
+	$doc->copy($doc->applyFilter($jellythumb, "brightness", array("level"=>50)), $layer_bg,200,0);
+	$doc->copy($doc->applyFilter($jellythumb, "brightness", array("level"=>-20)), $layer_bg,300,0);
+	$doc->copy($doc->applyFilter($jellythumb, "grayscale"), $layer_bg,400,0);
+	$doc->copy($doc->applyFilter($jellythumb, "colorize", array(
+		"r"	=> 160,
+		"g"	=> 210,
+		"b"	=> 9,
+		"a"	=> 50
+	)), $layer_bg,0,100);
+	$doc->copy($doc->applyFilter($jellythumb, "negative"), $layer_bg,100,100);
+	$doc->copy($doc->applyFilter($jellythumb, "pixelate", array("size"=>10,"advanced"=>false)), $layer_bg,200,100);
+	$doc->copy($doc->applyFilter($jellythumb, "pixelate", array("size"=>10,"advanced"=>true)), $layer_bg,300,100);
+	$doc->copy($doc->applyFilter($jellythumb, "contrast", array("level"=>-80)), $layer_bg,400,100);
+	$doc->copy($doc->applyFilter($jellythumb, "edge"), $layer_bg,0,200);
+	$doc->copy($doc->applyFilter($jellythumb, "emboss"), $layer_bg,100,200);
+	$doc->copy($doc->applyFilter($jellythumb, "blur"), $layer_bg,200,200);
+	$doc->copy($doc->applyFilter($jellythumb, "sketch"), $layer_bg,300,200);
+	$doc->copy($doc->applyFilter($jellythumb, "smooth", array("level"=>5)), $layer_bg,400,200);
 	
-	$thumb2 = $doc->fit($logo, 20, 500);
-	$doc->copy($thumb2, $imgs, 0, 0);
 	
-	$qrcode = $doc->loadImage("images/qr.png");
+	$logothumb 	= $doc->fit($logo, 500, 200);
+	$doc->copy($logothumb, $layer_imgs, 0, 300);
+	
+	$logothumb2 = $doc->fit($logo, 500, 200, false);
+	$doc->copy($logothumb2, $layer_imgs, 0, 200);
+	
+	$logothumb2	= $doc->fit($logo, 20, 500);
+	$doc->copy($logothumb2, $layer_imgs, 0, 0);
+	
 	$qrcode 	= $doc->fit($qrcode, 100, 100);
-	$doc->copy($qrcode, $imgs, 500-$qrcode["width"], 500-$qrcode["height"]);
+	$doc->copy($qrcode, $layer_imgs, 500-$qrcode["width"], 500-$qrcode["height"]);
 	
 	
 	$doc->raster("test.png");
