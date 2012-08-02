@@ -62,6 +62,10 @@
 	$small02	= $doc->fit($logo, 50,50, false, true);
 	$doc->export($small02, "small02.png");
 	
+	// qrcode
+	$qr 		= $doc->generateQRCode("http://www.google.com", 120, 120);
+	$doc->copy($qr, $layer_imgs, 0, 0);
+	
 	$doc->raster("test.png");
 ?>
 
@@ -75,5 +79,6 @@
 	<img src="test.png" style="border: 1px solid #000; padding: 5px;" />
 	<img src="small01.png" style="border: 1px solid #000; padding: 5px;" />
 	<img src="small02.png" style="border: 1px solid #000; padding: 5px;" />
+
 </body>
 </html>
