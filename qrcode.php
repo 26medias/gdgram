@@ -1,5 +1,5 @@
 <?php
-	//error_reporting(0);
+	error_reporting(0);
 	require_once("gdgram.php");
 	
 	if (!isset($_POST["url"])) {
@@ -25,6 +25,7 @@
 				"a"	=> 0
 			));
 			$qr = $doc->applyFilter($qr, "sketch");
+			$doc->copy($qr, $layer, 0, 0);
 			break;
 			case "black":
 			$qr = $doc->applyFilter($qr, "colorize", array(
@@ -36,6 +37,7 @@
 			$qr = $doc->applyFilter($qr, "sketch");
 			$qr = $doc->applyFilter($qr, "sketch");
 			$qr = $doc->applyFilter($qr, "sketch");
+			$doc->copy($qr, $layer, 0, 0);
 			break;
 			case "logo":
 			$doc->fill($layerroot, array(
@@ -58,13 +60,58 @@
 			$logo	= $doc->opacity($logo, 50);
 			$logo	= $doc->fit($logo, 100, 100);
 			$doc->copy($logo, $layerbg, 50, 50);
+			$doc->copy($qr, $layer, 0, 0);
 			break;
 			case "alpha":
 			$qr 	= $doc->transparent($qr, 1, 1);
+			$doc->copy($qr, $layer, 0, 0);
+			break;
+			case "tex01":
+			case "tex02":
+			case "tex03":
+			$qr 		= $doc->transparentColor($qr, array(0,0,0,0));
+			$qr = $doc->applyFilter($qr, "sketch");
+			$doc->copy($qr, $layer, 0, 0);
+			$texture	= $doc->loadImage("images/".$_POST["effect"].".png");
+			$texture	= $doc->fit($texture, 200, 200);
+			$doc->copy($texture, $layerbg, 0, 0);
+			$buffer = $doc->raster();
+			
+			$doc 		= new gdgram();
+			$doc->canvasSize(200,200);
+			$layer		= $doc->newLayer("main");
+			$buffer 	= $doc->transparent($buffer, 1, 1);
+			$doc->copy($buffer, $layer, 0, 0);
+			
+			$logo	= $doc->loadImage("images/php.png");
+			$logo	= $doc->fit($logo, 50, 50);
+			$logo	= $doc->center($logo, 200,200);
+			$doc->copy($logo, $layer, 0, 0);
+			break;
+			case "tex04":
+			$qr 		= $doc->transparentColor($qr, array(0,0,0,0));
+			$qr = $doc->applyFilter($qr, "sketch");
+			$doc->copy($qr, $layer, 0, 0);
+			$texture	= $doc->gradientFill(200,200,"diamond");
+			$doc->export($texture, "texture.png");
+			$doc->copy($texture, $layerbg, 0, 0);
+			$buffer = $doc->raster();
+			
+			$doc 		= new gdgram();
+			$doc->canvasSize(200,200);
+			$layer		= $doc->newLayer("main");
+			$buffer 	= $doc->transparent($buffer, 1, 1);
+			$doc->copy($buffer, $layer, 0, 0);
+			
+			$logo	= $doc->loadImage("images/php.png");
+			//$logo = $doc->applyFilter($logo, "sketch");
+			$logo	= $doc->fit($logo, 50, 50);
+			$logo	= $doc->center($logo, 200,200);
+			$doc->copy($logo, $layer, 0, 0);
 			break;
 		}
 		
-		$doc->copy($qr, $layer, 0, 0);
+		
 		
 		$doc->raster("qr.png");
 	}
@@ -87,6 +134,10 @@
 			<option value="black">Black Lines</option>
 			<option value="logo">Logo</option>
 			<option value="alpha">Transparent</option>
+			<option value="tex01">Texture01</option>
+			<option value="tex02">Texture02</option>
+			<option value="tex03">Texture03</option>
+			<option value="tex04">Texture04</option>
 		</select>
 		<input type="submit" value="Generate" />
 	</form>
