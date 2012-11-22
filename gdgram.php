@@ -167,7 +167,8 @@
 			);
 		}
 		
-		public function fit($ress, $mw, $mh, $scale=true, $resize=false) {
+		public function cropfit($ress, $mw, $mh) {
+			
 			$ress_ratio 	= $ress["width"] / $ress["height"];
 			$box_ratio		= $mw / $mh;
 			$diff = array(
@@ -175,6 +176,104 @@
 				"height"		=> $ress["height"] / $mh
 			);
 			$diff_ratio		= $diff["width"] / $diff["height"];
+			
+			/*debug("ress",$ress);
+			debug("fit",array("mw"=>$mw,"mh"=>$mh));
+			debug("ress_ratio",$ress_ratio);
+			debug("box_ratio",$box_ratio);*/
+			
+			// find resize box
+			if ($ress_ratio > 1) {
+				// landscape
+				//$resizebox = ceil($mh*$ress_ratio);
+				if ($ress_ratio > $box_ratio) {
+					// crop sides
+					$resizebox = ceil($mh*$ress_ratio);
+				} else {
+					// crop top
+					$resizebox = ceil($mh*$box_ratio);
+				}
+			} else {
+				// portrait
+				
+				if ($ress_ratio > $box_ratio) {
+					// crop sides
+					$resizebox = ceil($mw/$box_ratio);
+				} else {
+					// crop top
+					$resizebox = ceil($mw/$ress_ratio);
+				}
+			}
+			//debug("resizebox",ceil($resizebox));
+			
+			// fit
+			$scaled			= $this->fit($ress, $resizebox, $resizebox, true, true);
+			
+			// create
+			$output 		= array(
+				"ress"		=> $this->createTransparentRessource($mw, $mh),
+				"width"		=> $mw,
+				"height"	=> $mh
+			);
+			
+			//debug("output",$output);
+			
+			// copy
+			$x = round(($mw-$scaled["width"])/2);
+			$y = round(($mh-$scaled["height"])/2);
+			
+			//debug("x",$x);
+			//debug("y",$y);
+			
+			$this->copy($scaled, $output, $x, $y);
+			
+			return $output;
+			/*
+			return array(
+				"ress"		=> $output,
+				"width"		=> $mw,
+				"height"	=> $mh
+			);*/
+			
+		}
+		
+		public function fit($ress, $mw, $mh, $options=array()) {
+			
+			if (is_array($options)) {
+				if (isset($options["scale"])) {
+					$scale = $options["scale"];
+					if (!$scale) { $scale = false; }
+				} else {
+					$scale = false;
+				}
+				if (isset($options["resize"])) {
+					$resize = $options["resize"];
+					if (!$resize) { $resize = false; }
+				} else {
+					$resize = false;
+				}
+			} else {
+				// retrocompatibility
+				$numargs 	= func_num_args();
+				$args 		= func_get_args();
+				if ($numargs == 4) {
+					$scale = $args[3];
+				}
+				if ($numargs == 5) {
+					$scale = $args[3];
+					$resize = $args[4];
+				}
+			}
+			
+			
+			$ress_ratio 	= $ress["width"] / $ress["height"];
+			$box_ratio		= $mw / $mh;
+			$diff = array(
+				"width"			=> $ress["width"] / $mw,
+				"height"		=> $ress["height"] / $mh
+			);
+			$diff_ratio		= $diff["width"] / $diff["height"];
+			
 			
 			if ($ress_ratio > $box_ratio) {
 				$scale_ratio	= $ress["width"] / $mw;
