@@ -548,6 +548,35 @@
 			return $rgb;
 		}
 		
+		public function heatmap($points, $w, $h, $q=10, $s=50, $a=120) {
+			$buffer 	= $this->createTransparentRessource($w, $h);
+			$output		= $this->createTransparentRessource($w, $h);
+			$l = count($points);
+			$c = imagecolorallocatealpha($buffer, 0, 0, 0, $a);
+			for ($p=0;$p<$l;$p++) {
+				for ($i=1; $i <= $q; $i++) {
+					$r = $s/$q*$i;
+					imagefilledellipse ($buffer,$points[$p][0],$points[$p][1], $r, $r, $c);
+				}
+			}
+			$gradient = new gradient($output);
+			// color the image
+			for ($x=0;$x<$w;$x++) {
+				for ($y=0;$y<$h;$y++) {
+					$c = imagecolorsforindex($buffer, imagecolorat($buffer,$x,$y));
+					//debug("c",$c);
+					imagesetpixel($output, $x, $y, $gradient->getColorAt(127-$c["alpha"]));
+				}
+			}
+			$outputRess = array(
+				"ress"		=> $output,
+				"width"		=> imagesx($output),
+				"height"	=> imagesy($output)
+			);
+			$outputRess = $this->applyFilter($outputRess, "smooth", array("level"=>6));
+			return $outputRess;
+		}
+		
 		public function generateQRCode($url, $width, $height, $margin=2, $eclevel='L') {
 			$ggurl = "http://chart.apis.google.com/chart?chs=".$width."x".$height."&cht=qr&chld=".$eclevel."|".$margin."&chl=".urlencode($url);
 			//$ress = $this->createTransparentRessource($width, $height);
@@ -607,6 +636,69 @@
 		}
 	}
 	
+	class gradient{
+		function gradient($gdress,$colors=array("2F00EC","00FFFD","00FF02","FEFE00","FF1000"), $steps = 127) {
+			$this->colors 	= $colors;
+			$this->steps 	= $steps;
+			$this->gdress 	= $gdress;
+			$this->gradient = $this->generateGradient($steps);
+			// test
+			/*for ($i=0;$i<count($this->gradient);$i++) {
+				for ($x=0;$x<=30;$x++) {
+					for ($y=0;$y<4;$y++) {
+						//imagesetpixel($gdress, $x, $y+$i*4, $this->gradient[$i]);
+						imagesetpixel($gdress, $x, $y+$i*4, $this->getColorAt($i));
+					}
+				}
+			}*/
+			
+		}
+		// Generate the full gradient
+		function generateGradient($steps) {
+			$colors = array();
+			$_steps = round($steps/(count($this->colors)-1));
+			for ($i=0;$i<count($this->colors)-1;$i++) {
+				$_colors = $this->getGradient($this->colors[$i],$this->colors[$i+1],$_steps,100);
+				foreach ($_colors as $_color) {
+					array_push($colors, $_color);
+				}
+			}
+			array_push($colors, $this->hex2ress($this->colors[(count($this->colors)-1)],100));
+			/*foreach ($colors as $_color) {
+				echo '<div style="width:30px;height:2px;background-color:#'.$_color.'"></div>';
+			}*/
+			//debug("colors",$colors);
+			return $colors;
+		}
+		// Get gradient between 2 colors
+		function getGradient($cs, $ce, $steps, $a) {
+			
+			$r = hexdec(substr($cs,0,2));
+			$g = hexdec(substr($cs,2,2));
+			$b = hexdec(substr($cs,4,2));
+			
+			$rincr = (hexdec(substr($ce,0,2))-$r)/$steps; //Graduation Size Red
+			$gincr = (hexdec(substr($ce,2,2))-$g)/$steps;
+			$bincr = (hexdec(substr($ce,4,2))-$b)/$steps;
+			
+			$colors = array();
+			for($i=0;$i<$steps;$i++) {
+				array_push($colors,imagecolorallocatealpha($this->gdress,round($r+($rincr*$i)),round($g+($gincr*$i)),round($b+($bincr*$i)),$a));
+			}
+			return $colors;
+		}
+		// Hex to imagecolorallocatealpha
+		function hex2ress($hex,$a) {
+			$r = hexdec(substr($hex,0,2));
+			$g = hexdec(substr($hex,2,2));
+			$b = hexdec(substr($hex,4,2));
+			return imagecolorallocatealpha($this->gdress,$r,$g,$b,$a);
+		}
+		// Get a color at a specific point in the gradient
+		function getColorAt($n) {
+			return $this->gradient[$n];
+		}
+	}
 	
 	
 	/*
