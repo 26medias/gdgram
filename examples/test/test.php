@@ -1,6 +1,6 @@
 <?php
 
-	require_once("gdgram.php");
+	require_once("../../gdgram.php");
 	
 	$doc 		= new gdgram();
 	$doc->canvasSize(500,500);
@@ -18,9 +18,9 @@
 		"a"	=> 50
 	));
 	
-	$jellyfish 	= $doc->loadImage("images/Jellyfish.jpg");
-	$logo 		= $doc->loadImage("images/logo26.png");
-	$qrcode 	= $doc->loadImage("images/qr.png");
+	$jellyfish 	= $doc->loadImage("../RESS/Jellyfish.jpg");
+	$logo 		= $doc->loadImage("../RESS/logo26.png");
+	$qrcode 	= $doc->loadImage("../RESS/qr.png");
 	
 	$jellythumb	= $doc->fit($jellyfish, 100, 100);
 	$doc->copy($jellythumb, $layer_bg);

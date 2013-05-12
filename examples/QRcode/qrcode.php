@@ -1,6 +1,6 @@
 <?php
-	error_reporting(0);
-	require_once("gdgram.php");
+	error_reporting(E_ALL ^ E_NOTICE);
+	require_once("../../gdgram.php");
 	
 	if (!isset($_POST["url"])) {
 		$_POST["url"] = "http://www.youtube.com/watch?v=tCnBZi2URTE";
@@ -15,8 +15,9 @@
 		$layer		= $doc->newLayer("main");
 		$qr 		= $doc->generateQRCode($_POST["url"], 200, 200, 1);
 		
-		
-		switch ($_POST["effect"]) {
+		$effect = $_POST["effect"];
+		switch ($effect) {
+			default:
 			case "green":
 			$qr = $doc->applyFilter($qr, "colorize", array(
 				"r"	=> 160,
@@ -56,7 +57,7 @@
 			$qr 	= $doc->transparent($qr, 1, 1);
 			$qr		= $doc->opacity($qr, 70);
 			
-			$logo	= $doc->loadImage("images/php.png");
+			$logo	= $doc->loadImage("../RESS/php.png");
 			$logo	= $doc->opacity($logo, 50);
 			$logo	= $doc->fit($logo, 100, 100);
 			$doc->copy($logo, $layerbg, 50, 50);
@@ -72,7 +73,7 @@
 			$qr 		= $doc->transparentColor($qr, array(0,0,0,0));
 			$qr = $doc->applyFilter($qr, "sketch");
 			$doc->copy($qr, $layer, 0, 0);
-			$texture	= $doc->loadImage("images/".$_POST["effect"].".png");
+			$texture	= $doc->loadImage("../RESS/".$_POST["effect"].".png");
 			$texture	= $doc->fit($texture, 200, 200);
 			$doc->copy($texture, $layerbg, 0, 0);
 			$buffer = $doc->raster();
@@ -83,7 +84,7 @@
 			$buffer 	= $doc->transparent($buffer, 1, 1);
 			$doc->copy($buffer, $layer, 0, 0);
 			
-			$logo	= $doc->loadImage("images/php.png");
+			$logo	= $doc->loadImage("../RESS/php.png");
 			$logo	= $doc->fit($logo, 50, 50);
 			$logo	= $doc->center($logo, 200,200);
 			$doc->copy($logo, $layer, 0, 0);
@@ -93,7 +94,7 @@
 			$qr = $doc->applyFilter($qr, "sketch");
 			$doc->copy($qr, $layer, 0, 0);
 			$texture	= $doc->gradientFill(200,200,"diamond");
-			$doc->export($texture, "texture.png");
+			//$doc->export($texture, "texture.png");
 			$doc->copy($texture, $layerbg, 0, 0);
 			$buffer = $doc->raster();
 			
@@ -103,7 +104,7 @@
 			$buffer 	= $doc->transparent($buffer, 1, 1);
 			$doc->copy($buffer, $layer, 0, 0);
 			
-			$logo	= $doc->loadImage("images/php.png");
+			$logo	= $doc->loadImage("../RESS/php.png");
 			//$logo = $doc->applyFilter($logo, "sketch");
 			$logo	= $doc->fit($logo, 50, 50);
 			$logo	= $doc->center($logo, 200,200);
@@ -129,15 +130,14 @@
 		<label for="url">URL</label>
 		<input type="text" name="url" id="url" style="width: 200px;" value="<?php echo $_POST["url"]; ?>" />
 		<select name="effect" id="effect">
-			<option value="simple">Simple</option>
 			<option value="green">Green Blocks</option>
 			<option value="black">Black Lines</option>
 			<option value="logo">Logo</option>
 			<option value="alpha">Transparent</option>
-			<option value="tex01">Texture01</option>
-			<option value="tex02">Texture02</option>
-			<option value="tex03">Texture03</option>
-			<option value="tex04">Texture04</option>
+			<option value="tex01">Texture01 (from png)</option>
+			<option value="tex02">Texture02 (from png)</option>
+			<option value="tex03">Texture03 (from png)</option>
+			<option value="tex04">Texture04 (generated)</option>
 		</select>
 		<input type="submit" value="Generate" />
 	</form>

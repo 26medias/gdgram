@@ -239,6 +239,7 @@
 		
 		public function fit($ress, $mw, $mh, $options=array()) {
 			
+			$resize = false;
 			if (is_array($options)) {
 				if (isset($options["scale"])) {
 					$scale = $options["scale"];
@@ -548,6 +549,113 @@
 			return $rgb;
 		}
 		
+		public function writeText($ress, $options) {
+			$options = array_replace_recursive(array(
+				"text"	=> "Your text here",
+				"right"		=> 10,
+				"bottom"	=> 10,
+				"color"		=> "#ffcc00",
+				"size"		=> 5,
+				"alpha"		=> 50
+			), $options);
+			
+			if (array_key_exists("font", $options)) {
+				$bbox 		= imagettfbbox($options["size"], 0, $options["font"], $options["text"]);
+				$textWidth  = abs($bbox[4] - $bbox[0]);
+				$textHeight = abs($bbox[5] - $bbox[1]);
+				$offsetx	= $bbox[6];
+				$offsety	= $bbox[7];
+			} else {
+				$textWidth  = imagefontwidth($options["size"]) * strlen($options["text"]);
+				$textHeight = imagefontheight($options["size"]);
+				$offsetx	= 0;
+				$offsety	= 0;
+			}
+			
+			$color		= $this->hex2ress($ress,$options["color"], $options["alpha"]);
+			
+			// right/left/top/bottom align
+			if (array_key_exists("top", $options)) {
+				$y = $options["top"];
+			} else if (array_key_exists("bottom", $options)) {
+				$y = $ress["height"]-$textHeight-$options["bottom"];
+			}
+			if (array_key_exists("left", $options)) {
+				$x = $options["left"];
+			} else if (array_key_exists("right", $options)) {
+				$x = $ress["width"]-$textWidth-$options["right"];
+			}
+			
+			// Center align
+			if (array_key_exists("center", $options)) {
+				$align = str_split($options["center"]);
+				if (in_array("x",$align)) {
+					// align center
+					$x = ($ress["width"]-$textWidth)/2;
+				}
+				if (in_array("y",$align)) {
+					// align center
+					$y = ($ress["height"]-$textHeight)/2;
+				}
+			}
+			
+			// Apply offsets (TTF fonts)
+			$x -= $offsetx;
+			$y -= $offsety;
+			
+			if (array_key_exists("font", $options)) {
+				imagettftext($ress["ress"], $options["size"], 0, $x, $y, $color, $options["font"], $options["text"]);
+			} else {
+				imagestring($ress["ress"],$options["size"],$x,$y,$options["text"],$color);
+			}
+			
+			return $ress;
+		}
+		
+		
+		public function align($ress_main, $ress_second, $options) {
+			$options = array_replace_recursive(array(
+				"right"		=> 10,
+				"bottom"	=> 10,
+				"alpha"		=> 50
+			), $options);
+			
+			// Manage the alpha
+			if (array_key_exists("alpha", $options)) {
+				$ress_second		= $this->opacity($ress_second, $options["alpha"]);
+			}
+			
+			// right/left/top/bottom align
+			if (array_key_exists("top", $options)) {
+				$y = $options["top"];
+			} else if (array_key_exists("bottom", $options)) {
+				$y = $ress_main["height"]-$ress_second["height"]-$options["bottom"];
+			}
+			if (array_key_exists("left", $options)) {
+				$x = $options["left"];
+			} else if (array_key_exists("right", $options)) {
+				$x = $ress_main["width"]-$ress_second["width"]-$options["right"];
+			}
+			
+			// Center align
+			if (array_key_exists("center", $options)) {
+				$align = str_split($options["center"]);
+				if (in_array("x",$align)) {
+					// align center
+					$x = ($ress_main["width"]-$ress_second["width"])/2;
+				}
+				if (in_array("y",$align)) {
+					// align center
+					$y = ($ress_main["height"]-$ress_second["height"])/2;
+				}
+			}
+			
+			$this->copy($ress_second, $ress_main, $x, $y);
+			
+			
+			return $ress_main;
+		}
+		
 		public function heatmap($points, $w, $h, $q=10, $s=50, $a=120) {
 			$buffer 	= $this->createTransparentRessource($w, $h);
 			$output		= $this->createTransparentRessource($w, $h);
@@ -599,7 +707,7 @@
 			return $ress;
 		}
 		
-		public function raster($filename=false) {
+		public function raster($filename=false, $options=array()) {
 			$raster = $this->createTransparentRessource($this->canvas["width"], $this->canvas["height"]);
 			foreach ($this->layers as $layer) {
 				$coord = array();
@@ -610,13 +718,35 @@
 				imagesavealpha($raster,true);
 			}
 			if ($filename) {
-				imagepng($raster, $filename, 9, PNG_ALL_FILTERS);
+				$info = pathinfo($filename);
+				switch (strtolower($info["extension"])) {
+					default:
+					case "png":
+					imagepng($raster, $filename, array_key_exists("quality",$options)?$options["quality"]:9, PNG_ALL_FILTERS);
+					break;
+					case "jpg":
+					case "jpeg":
+					imagejpeg($raster, $filename, array_key_exists("quality",$options)?$options["quality"]:75);
+					break;
+					case "gif":
+					imagegif($raster, $filename);
+					break;
+				}
 			}
 			return array(
 				"ress"		=> $raster,
 				"width"		=> $this->canvas["width"],
 				"height"	=> $this->canvas["height"]
 			);
+		}
+		
+		// Hex to imagecolorallocatealpha
+		function hex2ress($ress,$hex,$a) {
+			$hex = str_replace("#","",$hex);
+			$r = hexdec(substr($hex,0,2));
+			$g = hexdec(substr($hex,2,2));
+			$b = hexdec(substr($hex,4,2));
+			return imagecolorallocatealpha($ress["ress"],$r,$g,$b,$a);
 		}
 		
 		
@@ -631,8 +761,22 @@
 			}
 		}
 		
-		public function export($ress, $filename) {
-			imagepng($ress["ress"], $filename, 9, PNG_ALL_FILTERS);
+		public function export($ress, $filename, $options=array()) {
+			$info = pathinfo($filename);
+			switch (strtolower($info["extension"])) {
+				default:
+				case "png":
+				imagepng($ress["ress"], $filename, array_key_exists("quality",$options)?$options["quality"]:9, PNG_ALL_FILTERS);
+				break;
+				case "jpg":
+				case "jpeg":
+				imagejpeg($ress["ress"], $filename, array_key_exists("quality",$options)?$options["quality"]:75);
+				break;
+				case "gif":
+				imagegif($ress["ress"], $filename);
+				break;
+			}
+			
 		}
 	}
 	
@@ -784,19 +928,19 @@
 		// depending on your server software configuration
 		function display ($im) {
 			if (function_exists("imagepng")) {
-				//header("Content-type: image/png");
+				header("Content-type: image/png");
 				imagepng($im);
 			}
 			elseif (function_exists("imagegif")) {
-				//header("Content-type: image/gif");
+				header("Content-type: image/gif");
 				imagegif($im);
 			}
 			elseif (function_exists("imagejpeg")) {
-				//header("Content-type: image/jpeg");
+				header("Content-type: image/jpeg");
 				imagejpeg($im, "", 0.5);
 			}
 			elseif (function_exists("imagewbmp")) {
-				//header("Content-type: image/vnd.wap.wbmp");
+				header("Content-type: image/vnd.wap.wbmp");
 				imagewbmp($im);
 			} else {
 				die("Doh ! No graphical functions on this server ?");
