@@ -266,6 +266,18 @@
 				}
 			}
 			
+			// backup
+			$omw	= $mw;
+			$omh	= $mh;
+				
+			if (!$scale) {
+				if ($mw > $ress["width"]) {
+					$mw = $ress["width"];
+				}
+				if ($mh > $ress["height"]) {
+					$mh = $ress["height"];
+				}
+			}
 			
 			$ress_ratio 	= $ress["width"] / $ress["height"];
 			$box_ratio		= $mw / $mh;
@@ -313,6 +325,35 @@
 				imagealphablending($buffer, true);
 				imagecopyresampled($buffer, $ress["ress"], 0, 0, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
 				imagesavealpha($buffer,true);
+				
+				if (array_key_exists("resizex", $options) || array_key_exists("resizey", $options)) {
+					// need to resize
+					$new_w = $nw;
+					$new_h = $nh;
+					if (array_key_exists("resizex", $options) && $options["resizex"] == false) {
+						$new_w = $omw;
+					}
+					if (array_key_exists("resizey", $options) && $options["resizey"] == false) {
+						$new_h = $omh;
+					}
+					
+					$blank 		= $this->createTransparentRessource($new_w, $new_h);
+					
+					$centered	= $this->align(array(
+						"ress"		=> $blank,
+						"width"		=> $new_w,
+						"height"	=> $new_h
+					), array(
+						"ress"		=> $buffer,
+						"width"		=> $nw,
+						"height"	=> $nh
+					), array(
+						"center"	=> "xy"
+					));
+					
+					return $centered;
+				}
+				
 				return array(
 					"ress"		=> $buffer,
 					"width"		=> $nw,
@@ -616,8 +657,7 @@
 		public function align($ress_main, $ress_second, $options) {
 			$options = array_replace_recursive(array(
 				"right"		=> 10,
-				"bottom"	=> 10,
-				"alpha"		=> 50
+				"bottom"	=> 10
 			), $options);
 			
 			// Manage the alpha
