@@ -29,12 +29,19 @@
 		"resizey"	=> false,
 		"resizex"	=> false
 	));
+	$logo_resizexy2		= $doc->fit($logo, 400,400, array(
+		"scale"		=> true,
+		"resize"	=> false,
+		"resizey"	=> false,
+		"resizex"	=> false
+	));
 	
 	// We export the generated image
 	$doc->export($logo_resize, "logo_resize.png");
 	$doc->export($logo_resizex, "logo_resizex.png");
 	$doc->export($logo_resizey, "logo_resizey.png");
 	$doc->export($logo_resizexy, "logo_resizexy.png");
+	$doc->export($logo_resizexy2, "logo_resizexy2.png");
 	
 ?>
 
@@ -49,5 +56,6 @@
 	<img src="logo_resizex.png?rnd=<?php echo rand(); ?>" style="border: 1px solid #000; padding: 0px;" />
 	<img src="logo_resizey.png?rnd=<?php echo rand(); ?>" style="border: 1px solid #000; padding: 0px;" />
 	<img src="logo_resizexy.png?rnd=<?php echo rand(); ?>" style="border: 1px solid #000; padding: 0px;" />
+	<img src="logo_resizexy2.png?rnd=<?php echo rand(); ?>" style="border: 1px solid #000; padding: 0px;" />
 </body>
 </html>

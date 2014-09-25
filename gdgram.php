@@ -143,7 +143,7 @@
 		
 		public function loadImage($filename) {
 			$info = pathinfo($filename);
-			switch($info["extension"]) {
+			switch(strtolower($info["extension"])) {
 			  case "jpg":
 			  case "jpeg":
 			    $ress = imagecreatefromjpeg($filename);
@@ -310,16 +310,32 @@
 				$ny				= 0;
 			}
 			// create the box
+			
 			if (!$resize) {
 				$buffer 		= $this->createTransparentRessource($mw, $mh);
 				imagealphablending($buffer, true);
-				imagecopyresampled($buffer, $ress["ress"], $nx, $ny, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
-				imagesavealpha($buffer,true);
-				return array(
-					"ress"		=> $buffer,
-					"width"		=> $mw,
-					"height"	=> $mh
-				);
+				// don't scale up
+				if ($mw > $ress["width"] || $mh > $ress["height"]) {
+					// scaling up! We can't!
+					$blank 		= $this->createTransparentRessource($mw, $mh);
+					$centered	= $this->align(array(
+						"ress"		=> $blank,
+						"width"		=> $mw,
+						"height"	=> $mh
+					), $ress, array(
+						"center"	=> "xy"
+					));
+					return $centered;
+				} else {
+					imagecopyresampled($buffer, $ress["ress"], $nx, $ny, 0, 0, $nw, $nh, $ress["width"], $ress["height"]);
+					imagesavealpha($buffer,true);
+					return array(
+						"ress"		=> $buffer,
+						"width"		=> $mw,
+						"height"	=> $mh
+					);
+				}
+				
 			} else {
 				$buffer 		= $this->createTransparentRessource($nw, $nh);
 				imagealphablending($buffer, true);
@@ -336,7 +352,6 @@
 					if (array_key_exists("resizey", $options) && $options["resizey"] == false) {
 						$new_h = $omh;
 					}
-					
 					$blank 		= $this->createTransparentRessource($new_w, $new_h);
 					
 					$centered	= $this->align(array(
